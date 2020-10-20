@@ -1,0 +1,141 @@
+﻿@model DashboardViewModel
+
+<div id="DashBoard" style="background-color: #e6f5ea; padding:-50px">
+
+    @for (int i = 0; i < Model.Tasks.Count; i++)
+    {
+        <input class="staskname" id="n-@i" value="@Model.Tasks[i].Name" hidden="hidden" />
+        <input class="staskprog" id="p-@i" value="@Model.Tasks[i].Progress" hidden="hidden" />
+        <input class="staskdur" id="d-@i" value="@(Model.Tasks[i].ActualDuratoin)" hidden="hidden" />
+    }
+
+    @foreach (var item in Model.TotalInvoices)
+    {
+        <input class="i-months" hidden value="@item.Month" />
+        <input class="i-sales" hidden value="@item.Sales" />
+        <input class="i-expenses" hidden value="@item.Expenses" />
+    }
+
+
+    @{
+        List<Activity> behind = new List<Activity>();
+        foreach (var item in Model.Tasks)
+        {
+            if (item.ActualDuratoin > (item.EndDate - item.StartDate).TotalDays)
+            {
+                behind.Add(item);
+            }
+        }
+    }
+
+    <br />
+
+
+    <div class="slice " style="display:flex; justify-content:flex-start">
+        <div class="dropdown">
+            <a href="#" class="dropdown-toggle nav-link px-2 py-2 btn btn-outline-info mr-2" data-toggle="dropdown" role="button"
+               aria-haspopup="true" aria-expanded="false"><i class="fas fa-clock"></i></a>
+
+            <table class="dropdown-menu px-3 " style="min-width:23rem ;  border-collapse: separate; border-spacing: 5px 10px;">
+                <tbody>
+                    <tr>
+                        <td class="  text-center alert alert-danger"><i class="far fa-hourglass"></i> Dead Line</td>
+                        <td class=" text-center alert alert-danger"> @Model.Tasks[0].Project.EndDate.Value.Date.ToShortDateString()</td>
+                    </tr>
+                    <tr>
+                        <td class=" text-center alert alert-warning"><i class="far fa-hourglass"></i> Remaining Time</td>
+                        @{
+                            int remaining = (int)(@Model.Tasks[0].Project.EndDate - DateTime.Now).Value.TotalDays;
+                            if (remaining > 0)
+                            {
+                                <td class="text-center alert alert-warning">@remaining day</td>
+                            }
+                            else
+                            {
+                                <td class="text-center alert alert-warning">Time Ended</td>
+                            }
+                        }
+                    </tr>
+                    <tr class="m-1">
+                        <td class=" text-center alert alert-info"><i class="fas fa-stopwatch"></i> Planned Duration</td>
+                        <td class=" text-center alert alert-info"> @Model.Tasks[0].Project.EndDate-@Model.Tasks[0].Project.StartDate day</td>
+                    </tr>
+                    <tr>
+                        <td class=" text-center alert alert-info "><i class="fas fa-stopwatch"></i> Actual Duration</td>
+                        <td class=" text-center alert alert-info">@Model.Tasks[0].Project.EndDate.Value.Date.ToShortDateString()</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+        <button class="font-weight-bold  alert alert-info mr-2" onclick="BackToList()">Back To List</button>
+        <div class="font-weight-bold text-center text-muted alert alert-info">@Model.Tasks[0].Project.Name</div>
+    </div>
+
+
+
+
+
+    <div class="slice" style="display:flex; justify-content:flex-start">
+        @* Bar Chart *@
+        <div style="height:350px; width:60%" id="columnchart_values"></div>
+        <div style="width:40%">
+            <h4 class="font-weight-bold">Progress</h4>
+            <h5 class="font-weight-light">
+                the progress of each task inside your project
+            </h5>
+        </div>
+    </div>
+
+
+
+    <div class="slice" style="display:flex; justify-content:flex-end">
+        <div style="width:40%">
+            <h4 class="font-weight-bold">Time Measure</h4>
+            <h5 class="font-weight-light">
+                the number of hours spent on each of the project's tasks
+            </h5>
+        </div>
+        @* Donut Chart *@
+        <div id="donutchart" style="height:350px; width:60%"></div>
+    </div>
+
+   
+
+
+
+
+    <div class="slice" style="display:flex; justify-content:flex-start">
+
+
+        @* Cost Chart *@
+        <div class="slice" style="width:80.5%;margin-left:5px">
+            <div id="chart_div" style="padding-left:30px; padding-top:30px;"></div>
+        </div>
+
+        
+
+    </div>
+
+</div>
+
+<script>
+    var modelInvoices = @Html.Raw(Json.Serialize(Model.TotalInvoices));
+</script>
+
+
+@section Style{
+    <style>
+        body {
+            background-color: #e6f5ea;
+        }
+
+        .slice {
+            border: 1px solid white;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0 0px 0;
+            background: white;
+        }
+    </style>
+}

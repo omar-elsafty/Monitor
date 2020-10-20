@@ -1,0 +1,556 @@
+﻿@model List<SubTask>
+
+<div id="Task">
+
+    <div class="row">
+        <h3 class="text-muted m-3">Your Tasks</h3>
+    </div>
+
+    <div class="row ">
+
+        <div id="leftSec" class="col-12 ">
+
+            @if (Model != null && Model.Count() > 0)
+            {
+                <div style="padding:10px;border: 0px solid white; border-radius: 8px; background:white; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);">
+                    <div class="table-responsive">
+                        <table class="table table-hover text-center " id="Tasktable">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th></th>
+                                    <th>Name</th>
+                                    <th>Project</th>
+                                    <th>Status</th>
+                                    <th class="remaining">Remaining Time</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @foreach (var item in Model)
+                                {
+                                    <tr id="@item.Id" onclick="SelectRow(@item.Id)">
+
+                                        <td>
+                                            <input onclick="ChangeISUnderWork(@item.Id)" id="sess-@item.Id" class="Ttime" asp-for="@item.IsUnderWork"  type="checkbox" data-toggle="toggle"
+                                                   data-size="xs">
+                                        </td>
+                                        <td>@item.Name</td>
+                                        <td>@item.Task.Project.Name</td>
+
+
+                                        @*@if (item.Status == Status.OnHold)
+                                            {
+                                                <td>
+                                                    <button class="btn btn-sm btn-warning" onclick="ChangeStatus(event,@item.Id)"
+                                                            onmouseover="StatusColor(event.target)"
+                                                            onmouseout="StatusColor(event.target)">
+                                                        OnHold
+                                                    </button>
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                <td>
+                                                    <button class="btn btn-sm btn-success" onclick="ChangeStatus(event,@item.Id)"
+                                                            onmouseover="StatusColor(event.target)"
+                                                            onmouseout="StatusColor(event.target)">
+                                                        Active
+                                                    </button>
+                                                </td>
+                                            }*@
+
+                                        <td>
+                                            <select asp-for="@item.Status" class="form-control">
+                                                <option value="0">Active</option>
+                                                <option value="1">OnHold</option>
+                                            </select>
+                                        </td>
+
+                                        @{
+                                            int remaining = (int)(item.EndDate - DateTime.Now).Value.TotalDays;
+
+                                            if (remaining > 0)
+                                            {
+                                                <td class="remaining">@remaining day</td>
+                                            }
+                                            else
+                                            {
+                                                <td class="text-danger remaining">Time Ended</td>
+                                            }
+                                        }
+
+
+                                        <td>
+                                            <div class="progress align-self-center">
+                                                <div class="progress-bar " role="progressbar" style="width: @item.Progress%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">@item.Progress%</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="border: 2px solid rgb(219, 219, 219) ; padding: 50px 25px;  border-radius: 8px;">
+                    <h4 class="text-muted text-center">You donot have tasks</h4>
+                </div>
+            }
+
+        </div>
+        <div id="rightSec">
+        </div>
+    </div>
+</div>
+
+
+
+@*<div id="dashboard">
+        <div class="py-2" style="display:flex; justify-content:space-between">
+
+            <div class="slice" style="width:39%">
+                <div id="Complexity" style="height:400px;"></div>
+            </div>
+            <div class="slice" style="width:60%">
+                <div id="Time_Quality" style=" height:400px;"></div>
+            </div>
+
+        </div>
+    </div>*@
+
+
+
+<!-- File Modal -->
+<div class="modal fade" id="FileModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">File</h5>
+            </div>
+            <form method="post" id="fileForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input id="fileTaskId" name="taskId" hidden class="form-control" />
+                    <input id="fileSubTaskId" name="subTaskId" hidden class="form-control" />
+                    <label>Upload File</label>
+                    <div class="custom-file">
+                        <input name="file" class="form-control custom-file-input" type="file" />
+                        <label class="custom-file-label">Choose File...</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="close" type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                    <button type="button" id="upload" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Hold Modal -->
+<div class="modal fade" id="HoldModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Hold Reason</h5>
+            </div>
+            <div class="modal-body">
+                <input hidden id="status" />
+                <input hidden id="taskId" />
+                <input hidden id="ele" />
+
+                <label>Reason</label>
+                <textarea id="reason" type="text" class="form-control"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="close" type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                <button id="send" type="button" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- #endregion -->
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive-ajax/dist/jquery.unobtrusive-ajax.js"></script>
+
+    <script>
+
+        let rowId;
+
+        function SelectRow(id) {
+            rowId = id;
+            $.ajax({
+                type: "GET",
+                url: `/Subtask/DisplayRow`,
+                data: { ID: id },
+                success: function (response) {
+                    $('#rightSec').replaceWith(response)
+                    $('#leftSec').removeClass('col-12')
+                    $('.remaining').hide();
+                    $('#leftSec').addClass('col-7')
+                },
+                error: function (x, y, err) {
+                    console.log(arguments)
+                }
+            })
+        }
+
+        function ChangeProgress(id, value) {
+            $.ajax({
+                type: "GET",
+                url: `/Subtask/EditProgress`,
+                data: {
+                    ID: id,
+                    progress: value
+                },
+                success: function () {
+                    var progresspar = document.getElementById(id).lastElementChild.firstElementChild.firstElementChild;
+                    progresspar.style.width = `${value}%`;
+                    progresspar.innerHTML = `${value}%`;
+                },
+                error: function (x, y, err) {
+                    console.log(arguments)
+                }
+            })
+        }
+
+
+
+        function ChangeISUnderWork(e) {
+            var g = document.getElementsByClassName("Ttime");
+            cell = $(`#sess-${id}`);
+            cell.bootstrapToggle('toggle')
+            $.ajax({
+                type: "Get",
+                url: `/Subtask/EditIsUnderWork`,
+                data: {
+                    ID: id,
+                    Is: cell[0].checked
+                },
+                success: function (response) {
+                    if (cell[0].checked) {
+                        $(g).each(function (i, ele) {
+                            console.log(ele);
+                            debugger;
+                            if (cell[0].id != ele.id) {
+                                $(ele).prop("checked", false);
+                                $(ele).bootstrapToggle('off');
+                            }
+                        });
+                    }
+                },
+                error: function (x, y, err) {
+                    console.log(arguments)
+                }
+            });
+
+        }
+
+
+        function UploadFile(subTaskId, taskId) {
+            $('#fileTaskId').attr("value", taskId);
+            $('#fileSubTaskId').attr("value", subTaskId);
+            $('#FileModal').modal('show');
+        }
+
+        $('input[type="file"]').change(function (e) {
+            console.log(e);
+            fileName = e.target.files[0].name;
+            $(".custom-file-label").html(fileName);
+        });
+
+        $('#upload').click(function () {
+            var form = $('#fileForm')[0];
+            var data = new FormData(form);
+            console.log(form);
+            if (fileName) {
+                $.ajax({
+                    type: 'post',
+                    url: `/comment/AddFileForSubTask`,
+                    data: data,
+                    processData: false,  // Important!
+                    contentType: false,
+                    cache: false,
+                    success: function (response) {
+                        $("#FileModal").modal('hide');
+                        console.log(response.msg);
+                    }
+                })
+            }
+        });
+
+
+
+
+
+        let previous;
+        let value;
+
+        $("select").on('focus', function () {
+            // Store the current value on focus and on change
+            previous = this.value;
+        }).change(function () {
+            value = this.value;
+            switch (value) {
+                case '0': //Active
+                    if (confirm('Do you want to active the task?')) {
+                        ChangeStatus(rowId, value);
+                    }
+                    else {
+                        $(`#${rowId} > td > select`)[0].value = previous
+                    }
+                    break;
+                case '1': //onhold
+                    $("#HoldModal").modal('show');
+                    break;
+            }
+        });
+
+
+        $('#send').click(function () {
+            let comment = $('#reason');
+            $.ajax({
+                type: "Post",
+                url: `/Task/AddComment`,
+                data: {
+                    subTaskId: $("#taskId").val(),
+                    comment: comment.val()
+                },
+                success: function (res) {
+                    $("#HoldModal").modal('hide');
+                    ChangeStatus(rowId, value, comment.val());
+                },
+                error: function (x, y, err) {
+                    console.log(err);
+                }
+            })
+        })
+
+        $('#close').click(function () {
+            $(`#${rowId} > td > select`)[0].value = previous
+        })
+
+        function ChangeStatus(Id, value, Reason) {
+            $.ajax({
+                type: "get",
+                url: `/subtask/editstatus`,
+                data: {
+                    id: Id,
+                    status: value,
+                    reason: Reason
+                },
+                success: function (response) {
+                },
+                error: function (x, y, err) {
+                    console.log(arguments)
+                }
+            })
+        }
+
+        //---------Add Comment To SubTask Thread-------//
+
+        function AddComment(subTaskId, taskId) {
+            let comment = $("#commentArea");
+            $.ajax({
+                type: "Post",
+                url: `/Comment/AddCommentForSubTask`,
+                data: {
+                    subTaskId: subTaskId,
+                    taskId: taskId,
+                    comment: comment.val()
+                },
+                success: function (res) {
+                    console.log(res);
+                    comment.val("");
+                },
+                error: function (x, y, err) {
+                    console.log(err);
+                }
+
+            })
+        }
+
+
+        $('#FileModal').on('hidden.bs.modal', function (e) {
+            $(".custom-file-label").html("");
+        })
+                                                                                                                         //function ChangeStatus(event, Id) {
+                                                                                                                                    //    event.stopPropagation();
+                                                                                                                                    //    var element = event.target;
+                                                                                                                                    //    var txtValue = element.innerText;
+
+                                                                                                                                    //    $("#status").val(txtValue);
+                                                                                                                                    //    $("#taskId").val(Id);
+                                                                                                                                    //    $("#ele").val(element);
+                                                                                                                                    //    $("#HoldModal").modal('show');
+                                                                                                                                    //}
+
+
+                                                                                                                                    //$('#send').click(function () {
+                                                                                                                                    //    let Reason = $('#reason').val();
+                                                                                                                                    //    let txtValue = $("#status").val();
+                                                                                                                                    //    let Id = $("#taskId").val();
+                                                                                                                                    //    let element = $("#ele").val();
+                                                                                                                                    //    let value;
+
+                                                                                                                                    //    switch (txtValue) {
+                                                                                                                                    //        case 'Active':
+                                                                                                                                    //            value = 0;
+                                                                                                                                    //            //element.classList.remove('btn-warning')
+                                                                                                                                    //            //element.classList.add('btn-success')
+                                                                                                                                    //            //element.innerText = 'Active'
+                                                                                                                                    //            break;
+                                                                                                                                    //        case 'OnHold':
+                                                                                                                                    //            value = 1;
+                                                                                                                                    //            //element.classList.remove('btn-success')
+                                                                                                                                    //            //element.classList.add('btn-warning')
+                                                                                                                                    //            //element.innerText = 'OnHold'
+                                                                                                                                    //            break;
+                                                                                                                                    //    }
+
+                                                                                                                                    //    $('#reason').val('');
+                                                                                                                                    //    $("#exampleModal").modal('toggle');
+
+                                                                                                                                    //    $.ajax({
+                                                                                                                                    //        type: "get",
+                                                                                                                                    //        url: `/subtask/editstatus`,
+                                                                                                                                    //        data: {
+                                                                                                                                    //            id: Id,
+                                                                                                                                    //            status: value,
+                                                                                                                                    //            reason: Reason
+                                                                                                                                    //        },
+                                                                                                                                    //        success: function (response) {
+                                                                                                                                    //        },
+                                                                                                                                    //        error: function (x, y, err) {
+                                                                                                                                    //            console.log(arguments)
+                                                                                                                                    //        }
+                                                                                                                                    //    })
+                                                                                                                                    //})
+
+                                                                                                                                    //$('#send').click(function () {
+                                                                                                                                    //debugger
+                                                                                                                                    //var value;
+                                                                                                                                    //var text = $('#reason').val()
+                                                                                                                                    //$('#reason').val('');
+                                                                                                                                    //let txtValue = $("#status").val();
+                                                                                                                                    //let Id= $("#taskId").val();
+
+                                                                                                                                    ////console.log(text)//send reason in notification
+
+                                                                                                                                    //$("#exampleModal").modal('toggle');
+
+                                                                                                                                    //$.ajax({
+                                                                                                                                    //    type: "get",
+                                                                                                                                    //    url: `/subtask/editstatus`,
+                                                                                                                                    //    data: {
+                                                                                                                                    //        id: Id,
+                                                                                                                                    //        status: value
+                                                                                                                                    //    },
+                                                                                                                                    //    success: function (response) {
+                                                                                                                                    //    },
+                                                                                                                                    //    error: function (x, y, err) {
+                                                                                                                                    //        console.log(arguments)
+                                                                                                                                    //    }
+                                                                                                                                    //})
+                                                                                                                                    //})
+
+
+                                                                                                                                    //function StatusColor(element) {
+                                                                                                                                    //    switch (element.innerText) {
+                                                                                                                                    //        case 'OnHold':
+                                                                                                                                    //            element.classList.remove('btn-warning')
+                                                                                                                                    //            element.classList.add('btn-success')
+                                                                                                                                    //            element.innerText = 'Active'
+                                                                                                                                    //            break;
+                                                                                                                                    //        case 'Active':
+                                                                                                                                    //            element.classList.remove('btn-success')
+                                                                                                                                    //            element.classList.add('btn-warning')
+                                                                                                                                    //            element.innerText = 'OnHold'
+                                                                                                                                    //            break;
+                                                                                                                                    //    }
+                                                                                                                                    //}
+
+    </script>
+}
+
+
+@section Style{
+    <link rel="stylesheet" href="~/css/progress.css" />
+    <style>
+        body {
+            background-color: #eef5f0;
+        }
+
+        .slice {
+            border: 1px solid white;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0 0px 0;
+            background: white;
+        }
+
+
+
+
+        /* Time */
+
+        time.icon {
+            font-size: 1em; /* change icon size */
+            display: block;
+            position: relative;
+            width: 5em;
+            height: 5em;
+            background-color: #fff;
+            margin: .4em auto;
+            border-radius: 0.6em;
+            box-shadow: 0 1px 0 #bdbdbd, 0 2px 0 #fff, 0 3px 0 #bdbdbd, 0 4px 0 #fff, 0 5px 0 #bdbdbd, 0 0 0 1px #bdbdbd;
+            overflow: hidden;
+        }
+
+            time.icon * {
+                display: block;
+                width: 100%;
+                font-size: 0.9em;
+                font-weight: bold;
+                font-style: normal;
+                text-align: center;
+            }
+
+            time.icon strong {
+                position: absolute;
+                top: 0;
+                padding: 0.1em 0;
+                color: #fff;
+                background-color: var(--green);
+                border-bottom: 1px dashed #154826;
+                box-shadow: 0 2px 0 var(--green);
+            }
+
+            time.icon em {
+                position: absolute;
+                bottom: 0.3em;
+                color: var(--green);
+            }
+
+            time.icon span {
+                width: 100%;
+                font-size: 1.7em;
+                letter-spacing: -0.05em;
+                padding-top: 0.8em;
+                color: #2f2f2f;
+            }
+    </style>
+}

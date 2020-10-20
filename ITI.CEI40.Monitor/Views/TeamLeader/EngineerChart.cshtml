@@ -1,0 +1,317 @@
+﻿@model EngineerChrtViewModel
+
+@foreach (var item in Model.Months)
+{
+    <input class="months" hidden asp-for="@item" />
+}
+
+@foreach (var item in Model.Quality)
+{
+    <input class="quality" hidden asp-for="@item" />
+}
+
+@foreach (var item in Model.Time)
+{
+    <input class="time" hidden asp-for="@item" />
+}
+
+@foreach (var item in Model.Complexity)
+{
+    <input class="complexity" hidden asp-for="@item" />
+}
+
+@foreach (var item in Model.LastTasks)
+{
+
+    <input class="taskd" hidden asp-for="@item.ActualDuration" />
+    <input class="taskq" hidden asp-for="@item.Quality" />
+    <input class="taskt" hidden asp-for="@item.TimeManagement" />
+    <input class="taskn" hidden asp-for="@item.Name" />
+}
+
+
+<div class="slice" style="display:flex; justify-content:flex-end">
+    <div style="width:40%">
+        <h4 class="font-weight-bold">Complexity</h4>
+        <h5 class="font-weight-light">
+            the sum of the complexity measure per sub task for your
+            sub tasks over months
+        </h5>
+    </div>
+    <div id="Complexity" style="height:350px; width:60%"></div>
+</div>
+
+<div class="slice" style="display:flex; justify-content:flex-start">
+    <div id="Time_Quality" style=" height:350px; width:60%"></div>
+    <div style="width:40%">
+        <h4 class="font-weight-bold">Performance Over Months</h4>
+        <h5 class="font-weight-light">
+            your performance by comparing the complexity vs time management
+            measures for your sub tasks over months
+        </h5>
+    </div>
+</div>
+
+<div class="slice" style="display:flex; justify-content:flex-end">
+    <div style="width:40%">
+        <h4 class="font-weight-bold">Time Measure</h4>
+        <h5 class="font-weight-light">
+            @*your performance by comparing the complexity vs time management
+            measures for each of your sub tasks*@
+            the number of hours that you spent working on each of your sub tasks
+        </h5>
+    </div>
+    <div id="hrs" style="height:350px; width:60%"></div>
+</div>
+
+<div class="slice" style="display: none; justify-content:flex-start">
+    <div id="donutchart" style=" height: 350px; width:60%"></div>
+    <div style="width:40%">
+        <h4 class="font-weight-bold">Time Measure</h4>
+        <h5 class="font-weight-light">
+            the number of hours that you spent working on each of your sub tasks
+        </h5>
+    </div>
+
+</div>
+
+
+@*<div class="py-2" style="display:flex; justify-content:space-between">
+
+        <div class="slice" style="width:49%">
+            <div id="Complexity" style="height:400px;"></div>
+        </div>
+        <div class="slice" style="width:50%">
+            <div id="Time_Quality" style=" height:400px;"></div>
+        </div>
+    </div>
+
+
+    <div style="display:flex; justify-content:space-between">
+
+        <div class="slice" style="width:49%">
+            <div id="hrs" style="height:400px;"></div>
+        </div>
+
+        <div class="slice" style="width:50%">
+            <div id="donutchart" style=" height: 400px;"></div>
+        </div>
+    </div>*@
+
+
+
+@section Scripts{
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', { 'packages': ['bar'] });
+        google.charts.load("current", { packages: ["corechart"] });
+        google.charts.setOnLoadCallback(drawChart);
+
+
+
+        var month = [];
+        var quality = [];
+        var time = [];
+        var complexity = [];
+
+        var TaskDuration = [];
+        var TaskQulaity = [];
+        var TaskTime = [];
+        var TaskName = [];
+
+
+        var end = $('.months')
+        var qual = $('.quality')
+        var ti = $('.time')
+        var comp = $('.complexity')
+
+        var TaskD = $('.taskd')
+        var TaskQ = $('.taskq')
+        var TaskT = $('.taskt')
+        var TaskN = $('.taskn')
+
+
+        for (var i = 0; i < end.length; i++) {
+            month.push(end[i].defaultValue)
+            quality.push(qual[i].defaultValue)
+            time.push(ti[i].defaultValue)
+            complexity.push(comp[i].defaultValue)
+
+            TaskDuration.push(TaskD[i].defaultValue)
+            TaskQulaity.push(TaskQ[i].defaultValue)
+            TaskTime.push(TaskT[i].defaultValue)
+            TaskName.push(TaskN[i].defaultValue)
+        }
+
+
+        function drawChart() {
+            var dataTime = new google.visualization.DataTable();
+            dataTime.addColumn('string', 'Month');
+            dataTime.addColumn('number', 'Qulaity');
+            dataTime.addColumn('number', 'Time Management');
+
+            dataTime.addRows([
+                [`${month[0]}`, Number(quality[0]), Number(time[0])]
+            ]);
+
+            for (let j = 1; j < time.length; j++) {
+                dataTime.addRows([
+                    [`${month[j]}`, Number(quality[j]), Number(time[j])]
+                ]);
+            }
+
+            var options = {
+
+                //title: 'Performance',
+                hAxis: { textStyle: { bold: true } },
+                //vAxis: { minValue: 0, maxValue: 100 },
+                animation: {
+                    startup: true,
+                    duration: 2500,
+                    easing: 'in',
+                },
+                bar: { groupWidth: "70%" },
+                legend: { position: "top" },
+                chartArea: { width: '78%', height: '78%' }
+            };
+
+            var chart = new google.visualization.ColumnChart(document.getElementById('Time_Quality'));
+
+            chart.draw(dataTime, options);
+
+            /**------------------------------------ */
+            /**------------------------------------ */
+
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Month');
+            data.addColumn('number', 'Complexity');
+
+            data.addRows([
+                [`${month[0]}`, Number(complexity[0])]
+            ]);
+
+            for (let j = 1; j < time.length; j++) {
+                data.addRows([
+                    [`${month[j]}`, Number(complexity[j])]
+                ]);
+            }
+
+            var optionsComp = {
+
+                //title: 'Tasks Complexity',
+                hAxis: { textStyle: { bold: true } },
+                animation: {
+                    startup: true,
+                    duration: 2500,
+                    easing: 'in',
+                },
+                bar: { groupWidth: "70%" },
+                legend: { position: "none" },
+                chartArea: { width: '78%', height: '78%' }
+
+            };
+            var chartcomp = new google.visualization.ColumnChart(document.getElementById('Complexity'));
+            chartcomp.draw(data, optionsComp);
+
+
+
+            /**------------------------------------ */
+            /**------------------------------------ */
+
+            var datahrs = new google.visualization.DataTable();
+            //datahrs.addColumn('string', 'Task');
+            //datahrs.addColumn('number', 'Quality');
+            //datahrs.addColumn('number', 'Time Management');
+
+            //datahrs.addRows([
+            //    [`${TaskName[0]}`, Number(TaskQulaity[0]), Number(TaskTime[0])]
+            //]);
+
+            //for (let j = 1; j < TaskName.length; j++) {
+            //    datahrs.addRows([
+            //        [`${TaskName[j]}`, Number(TaskQulaity[j]), Number(TaskTime[j])]
+            //    ]);
+            //}
+            datahrs.addColumn('string', 'Task');
+            datahrs.addColumn('number', 'Hrs');
+
+            datahrs.addRows([
+                [`${TaskName[0]}`, Number(TaskDuration[0])]
+            ]);
+
+            for (let j = 1; j < TaskName.length; j++) {
+                datahrs.addRows([
+                    [`${TaskName[j]}`, Number(TaskDuration[j])]
+                ]);
+            }
+
+            var optionsComp = {
+
+                //title: 'Month Tasks',
+                hAxis: { textStyle: { bold: true } },
+                //vAxis: { minValue: 0, maxValue: 100 },
+                animation: {
+                    startup: true,
+                    duration: 2500,
+                    easing: 'in',
+                }, legend: { position: "none" },
+                chartArea: { width: '75%', height: '75%' }
+
+
+            };
+            var chartcomp = new google.visualization.ColumnChart(document.getElementById('hrs'));
+            chartcomp.draw(datahrs, optionsComp);
+
+            /*----------------------------------*/
+            /*----------------------------------*/
+
+
+            var datadonut = new google.visualization.DataTable();
+            datadonut.addColumn('string', 'Task');
+            datadonut.addColumn('number', 'Hrs');
+
+            datadonut.addRows([
+                [`${TaskName[0]}`, Number(TaskDuration[0])]
+            ]);
+
+            for (let j = 1; j < TaskName.length; j++) {
+                datadonut.addRows([
+                    [`${TaskName[j]}`, Number(TaskDuration[j])]
+                ]);
+            }
+
+            var optionsDonut = {
+                title: 'TaskDuration',
+                pieHole: 0.4,
+
+                chartArea: { width: '78%', height: '78%', left: '17%' }
+            };
+
+            var chartdonut = new google.visualization.PieChart(document.getElementById('donutchart'));
+            chartdonut.draw(datadonut, optionsDonut);
+
+        }
+
+
+    </script>
+
+
+}
+
+
+@section Style{
+    <style>
+        body {
+            background-color: #e6f5ea;
+        }
+
+        .slice {
+            border: 1px solid white;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0 0px 0;
+            background: white;
+        }
+    </style>
+}

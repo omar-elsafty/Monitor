@@ -1,0 +1,294 @@
+﻿@model EmployeeViewModel
+@{
+    ViewData["Title"] = "View Employees";
+}
+
+@*<h4 class="btn btn-success">View Employees</h4>*@
+<div class="mt-5 pt-5">
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-info btn-sm mb-3" data-toggle="modal" data-target="#addEmployeeModal">
+        Add Employee
+    </button>
+    <div id="filterSection" class="row "> 
+        <form method="post" data-ajax-url="/Employee/GetTeamEmployees" data-ajax="true" data-ajax-method="Get" data-ajax-complete="displayEmployees"
+              data-ajax-update="#tableBody" data-ajax-mode="replace" id="filterForm" class="col-8 row">
+            <div id="AddDepartmentSection" class="col-9">
+                <div  id="DepartmentSection" class="row" >
+                    <div class="form-group col-6 ">
+                        <select class="form-control form-control-sm" id="DepartmentId" asp-for="DepId"
+                                asp-items="new SelectList(Model.Departments,nameof(Department.Id),nameof(Department.Name))" onchange="getTeams()">
+                            <option value="0">Select Department</option>
+                        </select>
+                        <span asp-validation-for="DepId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-6 ">
+                        <select class="form-control form-control-sm" id="teams" asp-for="TeamId"
+                                asp-items="new SelectList(string.Empty,nameof(Team.Id),nameof(Team.Name))">
+                        </select>
+                        <span asp-validation-for="TeamId" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+            <button type="submit" class="btn btn-outline-info btn-sm ">Filter</button>
+            </div>
+        </form>
+    </div>
+    <div style="text-align:center">
+        <table class="table table-sm">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">E-Mail</th>
+                    <th scope="col">Salary </th>
+                    <th scope="col">Evaluation</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBody">
+
+                @for (int i = 0; i < Model.Employees.Count(); i++)
+                {
+                    <partial name="_EmployeePartialView" model="Model.Employees[i]" />
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- Add Employee -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" data-ajax-url="/Employee/AddEmployee" data-ajax="true" data-ajax-method="Post" data-ajax-complete="addEmployee"
+                  data-ajax-update="#tableBody" data-ajax-mode="after" id="EmployeeForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Add Employee</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @*<input hidden type="text" asp-for="FK_TeamId" value="@Model.FK_TeamId" />*@
+                    <div class="form-group">
+                        <label asp-for="UserName"></label>
+                        <input asp-for="UserName" class="form-control form-control-sm" />
+                        <span asp-validation-for="UserName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Email"></label>
+                        <input asp-for="Email" class="form-control form-control-sm" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div id="AddDepartmentSection">
+                        <div class="row" id="DepartmentSection">
+                            <div class="form-group col-6">
+                                <label asp-for="DepName"></label>
+                                <select class="form-control form-control-sm" id="DepartmentId" asp-for="DepId"
+                                        asp-items="new SelectList(Model.Departments,nameof(Department.Id),nameof(Department.Name))" onchange="getTeams()">
+                                    <option value="0">Select Department</option>
+                                </select>
+                                <span asp-validation-for="DepId" class="text-danger"></span>
+                            </div>
+                            <div class="form-group col-6">
+                                <label asp-for="TeamName"></label>
+                                <select class="form-control form-control-sm" id="teams" asp-for="TeamId"
+                                        asp-items="new SelectList(string.Empty,nameof(Team.Id),nameof(Team.Name))">
+                                </select>
+                                <span asp-validation-for="TeamId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Salary"></label>
+                        <input asp-for="Salary" class="form-control form-control-sm" type="number" />
+                        <span asp-validation-for="Salary" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Password"></label>
+                        <input asp-for="Password" class="form-control form-control-sm" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="ConfirmPassword"></label>
+                        <input asp-for="ConfirmPassword" class="form-control form-control-sm" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-sm">Add Employee</button>
+                    <button type="reset" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Employee Info -->
+<div class="modal fade" id="EditEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" data-ajax-url="/Employee/EditEmployee" data-ajax="true" data-ajax-method="Post"
+                  data-ajax-success="SuccessEdit" data-ajax-complete="EditEmployee" id="EditEmployeeForm">
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<!-- Edit Roles -->
+<div class="modal fade  " id="EditRolesModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            @Html.AntiForgeryToken()
+            <form method="post" data-ajax-url="/Employee/EditEmployeeRoles" data-ajax="true" data-ajax-method="Post" data-ajax-complete="EditRoles"
+                  id="RolesForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Employee Roles</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body mt-0 pt-0" id="RolesModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                    <button type="reset" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+@section scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/jquery-validation-unobtrusive-ajax/dist/jquery.unobtrusive-ajax.js"></script>
+    <script>
+
+        function addEmployee(result, status) {
+            if (status == "success") {
+                $('#addEmployeeModal').modal('hide');
+                document.getElementById("EmployeeForm").reset();
+                alert("Employee added Successfully");
+            }
+            else {
+                alert("Error While Adding Employee");
+                document.getElementById("EmployeeForm").reset();
+            }
+        }
+
+        //-------Edit Roles----//
+
+        function UpdateEmpRoles(id) {
+            $.ajax({
+                url: "/Employee/EditEmployeeRoles/" + id,
+                type: "GET",
+                //dataType: "json",
+                success: function (result, status) {
+                    $("#RolesModalBody").append(result);
+                    $('#EditRolesModal').modal('show');
+                }
+            });
+        }
+
+        function EditRoles(result, status) {
+            if (status == "success") {
+                $('#EditRolesModal').modal('hide');
+                document.getElementById("RolesForm").reset();
+                alert("Employee Roles Updated Successfully");
+            }
+            else {
+                $('#EditRolesModal').modal('hide');
+                alert("Error While Updating Roles");
+                document.getElementById("RolesForm").reset();
+            }
+        }
+
+        $('#EditRolesModal').on('hidden.bs.modal', function (e) {
+            console.log(e);
+            $("#RolesModalBody").empty();
+        })
+
+        //-----------------------------------------//
+
+
+        //-------------Edit Employee---------------//
+
+        function EditEmployeeInfo(id) {
+
+            $.ajax({
+                url: "/Employee/EditEmployee/" + id,
+                type: "GET",
+                success: function (result, status) {
+                    if (status == "success") {
+                        $("#EditEmployeeForm").prepend(result);
+                        $('#EditEmployeeForm').attr("data-ajax-update", id);
+                        $('#EditEmployeeModal').modal('show');
+                        $('#editModal').append($('#DepartmentSection'));
+                    }
+                }
+            });
+        }
+
+
+        $('#EditEmployeeModal').on('hidden.bs.modal', function (e) {
+            $('#AddDepartmentSection').append($('#DepartmentSection'));
+            $("#EditEmployeeForm").empty();
+
+        })
+
+
+        //----------Get Teams after Selecting Department
+        function getTeams() {
+            console.log($("#DepartmentId").val());
+            var DepId = $("#DepartmentId").val();
+            console.log(DepId);
+            $.ajax({
+                url: "/Employee/GetTeamsforEdit/" + DepId,
+                url: "/Employee/GetTeamsforEdit/" + DepId,
+                type: "GET",
+                success: function (result, status) {
+                    if (result && status == "success") {
+                        console.log(result);
+                        $("#teams").empty();
+                        $("#teams").append("<option value='0'>Select Team</option>");
+                        for (var i = 0; i < result.length; i++) {
+                            $("#teams").append(`<option value='${result[i].id}'>${result[i].name}</option>`);
+                        }
+                    }
+                }
+            })
+        }
+
+        function EditEmployee() {
+            $('#EditEmployeeModal').modal('hide');
+            alert("Updated Successfully !");
+        }
+
+        function SuccessEdit(result, status) {
+            console.log("Hi")
+            console.log(result);
+            if (result && status == "success") {
+                console.log(result);
+                if (result.teamId == 0) {
+                    $(`#${result.empId} .email`).html(result.eMail);
+                    $(`#${result.empId} .salary`).html(result.salary);
+                }
+                else {
+                    $(`#${result.empId}`).remove();
+                }
+            }
+
+        }
+
+
+    </script>
+}
+

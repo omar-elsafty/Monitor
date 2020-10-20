@@ -1,0 +1,22 @@
+﻿@model Department
+
+    <tr id="@Model.Id" onclick="showTeams(@Model.Id)">
+        <td class="text-center font-weight-bold">@Model.Name</td>
+        @if (Model.Manager == null)
+        {
+            <td></td>
+        }
+        else
+        {
+            <td>@Model.Manager.UserName</td>
+        }
+        <td class="text-right">
+            <div class="btn-group" role="group" aria-label="Basic example">
+                @*<a class="btn btn-outline-primary" asp-controller="Department" asp-action="viewTeams" asp-route-id="@Model.Id"><i class="fas fa-users"></i></a>*@
+                <button type="button" class="btn btn-outline-success btn-sm" onclick="AssignManager(@Model.Id)"><i class="fas fa-male"></i></button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="deleteDept(@Model.Id)"><i class="far fa-trash-alt"></i></button>
+            </div>
+        </td>
+    </tr>
+
+

@@ -1,0 +1,212 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ITI.CEI40.Monitor</title>
+
+
+    <environment include="Development">
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+              asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css"
+              asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute"
+              crossorigin="anonymous"
+              integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" />
+    </environment>
+    @* Font-awesome *@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.standalone.min.css" />
+    <link rel="stylesheet" href="~/css/style.css" />
+
+
+    <style>
+        * {
+            font-family: "Times New Roman", Times, serif;
+        }
+
+        pre {
+            font-family: "Times New Roman", Times, serif;
+        }
+    </style>
+
+    @RenderSection("Style", required: false)
+
+</head>
+<body>
+    <header class="btn">
+        <partial name="_LoginPartial.cshtml" />
+    </header>
+    <div class="container mb-4">
+        <partial name="_CookieConsentPartial" />
+        <main role="main" style="margin-top :45px;">
+            <div id="main" style="position:relative">
+
+            </div>
+            @RenderBody()
+        </main>
+    </div>
+    <environment include="Development">
+        <script src="~/lib/jquery/dist/jquery.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
+                asp-fallback-src="~/lib/jquery/dist/jquery.min.js"
+                asp-fallback-test="window.jQuery"
+                crossorigin="anonymous"
+                integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=">
+        </script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"
+                asp-fallback-src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"
+                asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal"
+                crossorigin="anonymous"
+                integrity="sha384-xrRywqdh3PHs8keKZN+8zzc5TX0GRTLCcmivcbNJWm2rs5C8PRhcEn3czEjhAO9o">
+        </script>
+    </environment>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+
+    <script>
+       @if (SignInManager.IsSignedIn(User)) {
+           <text>
+            var c = 3; // step to number of notifications
+            var ul; // create the notification list
+            ul = document.createElement("ul");
+            ul.setAttribute('id', 'notify-list');
+            ul.setAttribute('class', 'notification-list');
+
+            var loadMoreBtn = document.createElement("input");
+            loadMoreBtn.setAttribute('type', 'button');
+            loadMoreBtn.setAttribute('value', 'load more..');
+            loadMoreBtn.setAttribute('class', 'loadmorebtn');
+
+            // add the ul to the notification bar
+            $('.notifications').popover({
+                html: true,
+                title: "Notifications",
+                animation: true,
+                content: ul,
+                placement: "bottom",
+                //trigger: 'focus'
+            });
+
+            //establishing connection
+            connection = new signalR.HubConnectionBuilder().withUrl("/notificationsHub").build();
+            connection.start();
+
+            //invoked by the server
+            connection.on("newNotification", function (msg, seen, id) {
+                console.log("1?"+msg);
+                console.log("1?"+seen);
+                console.log("1?"+id);
+                var li = document.createElement('li');
+                li.setAttribute('id', `${id}`);
+                if (seen == false || seen == undefined) {
+                    li.setAttribute('class', 'unseen');
+                    var count = parseInt($('#notify-count').val()) + 1;
+                    $('#notify-count').val(count);
+                };
+                //li.setAttribute('style', ' border-radius: 10px;');
+                li.appendChild(styling(msg));
+                //console.log(li.className);
+                $(ul).prepend(li)
+            });
+            // add the button to load more notification from database
+            ul.appendChild(loadMoreBtn);
+            // load more old notifications
+        $(loadMoreBtn).click(function () {
+            $.getJSON(`../../Notification/LoadMore/`, { c: c }, function (list) {
+                //console.log(list);
+                //console.log($(ul).children("li"));
+                list.forEach(function (user) {
+                    //console.log(user.notification);
+                    var li = document.createElement('li');
+                    li.setAttribute('id', `${user.notification.id}`);
+                    if (user.notification.seen == false || user.notification.seen == undefined) {
+                        li.setAttribute('class', 'unseen');
+                        var count = parseInt($('#notify-count').val()) + 1;
+                        $('#notify-count').val(count);
+                    };
+                    li.appendChild(styling(user.notification.messege));
+                    var countLi = $(ul).children("li").length;
+                    $(ul).children("li")[countLi - 1].after(li);
+                });
+                c += 3;
+            });
+        });
+        </text>
+        }
+
+        // styling the string message
+        function styling(rowMsg) {
+            var msgParts = rowMsg.split("*");
+            var messege = document.createElement("div");
+            var x = document.createElement("HR");
+            msgParts.forEach(function (p) {
+                var styled = p.split("=");
+                if (styled[1] == "") {
+                    var sp = document.createElement("SPAN");
+                    sp.innerText = styled[0];
+                    //sp.style.color = "red";
+                    sp.style.fontWeight = "bold";
+                    p = sp;
+                } else {
+                    var sp = document.createElement("SPAN");
+                    sp.innerText = p;
+                    p = sp;
+                }
+                messege.appendChild(p);
+            });
+            messege.appendChild(x);
+            return messege
+        }
+
+        // reset the counter and assigne alert class (the event wait the append)
+        $(".notifications").on("shown.bs.popover", function () {
+            $('#notify-count').val(0);
+            //console.log($('#notify-list'));
+            //console.log($('.unseen').length);
+            $(".unseen").each(function (i, ele) {
+                $(ele).removeClass("unseen");
+                $(ele).addClass("newnotification");
+                var id = ele.id;
+                console.log(id);
+                 $.ajax({
+                    type: "POST",
+                    url: "/Notification/SeeMessege/" + id,
+                    //data: {id: id},
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (msg) {
+                         console.log("after seen: " + msg);
+                    }
+                 });
+            });
+        });
+
+        // remove the alert class
+        $(".notifications").on("hide.bs.popover", function () {
+            //console.log($('.newnotification').length);
+            $(".newnotification").each(function (i, ele) {
+                $(ele).removeClass("newnotification");
+            });
+        });
+
+
+    //    $(document).ready(function(){
+    //$("#MsgButton").toast('show');
+//});
+
+
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+
+

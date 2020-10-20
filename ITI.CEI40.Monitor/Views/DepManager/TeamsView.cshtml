@@ -1,0 +1,178 @@
+﻿@model List<Team>
+@{
+    ViewData["Title"] = "TeamsView";
+}
+
+
+<div>
+    <div class="row">
+        <h3 class="text-muted m-3">Teams</h3>
+    </div>
+    <div class="row " style="border: 2px solid rgb(219, 219, 219) ; border-radius: 8px;">
+        <div class="col-3 innerleft pt-4 " style="border-right:2px solid rgb(219, 219, 219);">
+                <table class="table table-hover text-center " id="teamTable">
+                    <thead class="table-hover">
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Leader</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Count(); i++)
+                        {
+
+                            <tr id="@Model[i].Id" onclick="displayTasks(@Model[i].Id)">
+                                <td>@Model[i].Name</td>
+                                @if (Model[i].TeamLeader != null)
+                                {
+                                    <td>@Model[i].TeamLeader.UserName</td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                }
+                                @*<td><button class="btn btn-info" onclick='displayCharts("@Model[i].Id")'>Charts</button></td>*@
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+        </div>
+        
+        <div class="col-9 innerright " >
+            <div  padding: 15px; border-radius: 8px;" class="mt-4">               
+                
+                <div class="row" id="tasks" style="margin:auto">
+                    <h4 id="alertdiv" class="text-muted text-center mt-4" style= "margin:auto;">Select Team to Show Data</h4>
+                    <div id="tableBody" class="table table-hover">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<button type="button" id="togleBtn" class="btn btn-primary d-none" data-toggle="modal" data-target="#exampleModal">
+    Launch demo modal
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Write a reason for Holding</h5>
+
+            </div>
+            <div class="modal-body">
+                Reason:
+                <br />
+                <input id="reason" type="text" class="form-control" />
+            </div>
+            <div class="modal-footer">
+                <button id="close" type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                <button id="send" type="button" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts{
+
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+
+    <script>
+        function EditPriority(id, value) {
+            $.ajax({
+                type: "GET",
+                url: `/Subtask/EditPriority`,
+                data: {
+                    ID: id,
+                    priority: value
+                },
+                success: function () {
+
+                },
+                error: function (x, y, err) {
+                    console.log(arguments)
+                }
+            })
+        }
+
+        //function displayCharts(id) {
+        //    $.ajax({
+        //        url: "/DepManager/displayCharts",
+        //        type: "Get",
+        //        data: { teamId: id },
+        //        success: function (result) {
+        //            if (flag) {
+        //                $('#barchart_values').empty();
+        //                $('#barchart_values').append(result);
+        //                var names = $('.taskname')
+        //                var progress = $('.taskprog')
+        //                for (var i = 0; i < names.length; i++) {
+        //                    //console.log(names[i].defaultValue)
+        //                    ns.push(names[i].defaultValue)
+        //                }
+        //                for (var i = 0; i < progress.length; i++) {
+        //                    //console.log(progress[i].defaultValue)
+        //                    ps.push(progress[i].defaultValue)
+        //                }
+        //                drawChart();
+
+        //                flag = false;
+
+        //            }
+        //        }
+        //    })
+        //}
+
+        function displayTasks(id) {
+            $.ajax({
+                url: "/DepManager/displayTasks",
+                type: "Get",
+                data: { teamId: id },
+                success: function (result) {
+                    if (result) {
+                        $('#alertdiv').hide();
+                        $('#tableBody').empty();
+                        $('#tableBody').append(result);
+                    }
+                }
+            })
+        }
+
+
+        function ChangeStatus(Id, value) {
+            var meassage;
+            switch (value) {
+                case 2:
+                    meassage = 'Do you want to submit this task';
+                    break;
+                case 3:
+                    meassage = 'Do you want to cancel this task';
+                    break;
+            }
+
+            if (confirm(meassage)) {
+                $.ajax({
+                    url: "/DepManager/EditStatus",
+                    type: "Get",
+                    data: {
+                        id: Id,
+                        status: value
+                    },
+                    success: function () {
+                        $(`#${Id}`).hide();
+                    }
+                })
+            }
+        }
+    </script>
+}
+

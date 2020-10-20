@@ -1,0 +1,183 @@
+﻿@model List<ApplicationUser>
+@{
+    ViewData["Title"] = "EngineersView";
+}
+
+
+<div>
+    <div>
+        <h3 class="text-muted m-3">Engineers</h3>
+    </div>
+    <div class="row " style="border: 0px solid white; border-radius: 8px; background:white; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);" >
+        <div class="col-3  innerleft pt-4" style="border-right:2px solid rgb(219, 219, 219);">
+            <table class="table table-hover text-center" id="teamTable">
+                <tbody>
+                    @for (int i = 0; i < Model.Count(); i++)
+                    {
+                        if (Model[i].Id != Model.FirstOrDefault().Team.FK_TeamLeaderId && Model[i].Id != Model.FirstOrDefault().Team.Department.FK_ManagerID)
+                        {
+
+                            <tr id="@Model[i].Id" onclick='displaySubTasks("@Model[i].Id")'>
+                                <td>@Model[i].UserName</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-9 innerright ">
+            <div style="">
+                <div class="row" style="margin:auto;" id="tasks">
+                    <h4 id="alertdiv" class="text-muted text-center mt-5" style="margin:auto;">Select Engineer to Show Data</h4>
+                    <div id="tableBody" class="table table-hover align-middle">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+<!-- #endregion -->
+@*<script src="script.js"></script>*@
+@section scripts{
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <script>
+
+        google.charts.load('current', { 'packages': ['corechart'] });
+        //google.charts.setOnLoadCallback(drawChart);
+        var ns = [];
+        var ps = [];
+        var flag = true;
+        function drawChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Name');
+            data.addColumn('number', 'Progress');
+
+            data.addRows([
+                [`${ns[0]}`, parseInt(ps[0])],
+            ]);
+
+            for (let j = 1; j < ns.length; j++) {
+                data.addRows([
+                    [`${ns[j]}`, parseInt(ps[j])],
+                ]);
+            }
+
+            var options = {
+                title: "Tasks in progress",
+                width: 200,
+                height: 150,
+                bar: { groupWidth: "70%" },
+                legend: { position: "none" },
+            };
+            var chart = new google.visualization.BarChart(document.getElementById("barchart_values"));
+            chart.draw(data, options);
+        }
+
+        function deletesvg() {
+            $('svg').remove();
+
+        }
+
+        function displayCharts(id) {
+            $.ajax({
+                url: "/TeamLeader/displayCharts",
+                type: "Get",
+                data: { engId: `${id}` },
+                success: function (result) {
+                    if (result) {
+                        if (flag) {
+                            $('#barchart_values').append(result);
+                            var names = $('.staskname')
+                            var progress = $('.staskprog')
+                            for (var i = 0; i < names.length; i++) {
+                                //console.log(names[i].defaultValue)
+                                ns.push(names[i].defaultValue)
+                            }
+                            for (var i = 0; i < progress.length; i++) {
+                                //console.log(progress[i].defaultValue)
+                                ps.push(progress[i].defaultValue)
+                            }
+                            console.log(result)
+
+                            drawChart();
+                            flag = false;
+                        }
+                    }
+                }
+            })
+        }
+
+
+
+        function displaySubTasks(id) {
+            $.ajax({
+                url: "/TeamLeader/displaySubTasks",
+                type: "Get",
+                data: { engId: `${id}` },
+                success: function (result) {
+                    if (result) {
+                        $('#alertdiv').hide();
+                        $('#tableBody').empty();
+                        $('#tableBody').append(result);
+                    }
+                }
+            })
+        }
+
+
+
+        function Submit(Id) {
+            $("#SubmitModal").modal('show');
+            $("#id").val(Id);
+        }
+
+
+
+
+        function SubmitTask(e) {
+            e.preventDefault();
+            debugger
+            // console.log($('#subtaskSubmit').serialize());
+            $.ajax({
+                url: "/TeamLeader/SubmitSubTask",
+                method: "POST",
+                contentType: "Application/json",
+                data: JSON.stringify($('#subtaskSubmit').serialize())
+            })
+        }
+
+
+
+
+        function Cancele(Id) {
+            if (confirm('Do you want to cancel this task')) {
+                $.ajax({
+                    url: "/TeamLeader/CancelSubTask",
+                    type: "Get",
+                    data: {
+                        id: Id,
+                    },
+                    success: function () {
+                        $(`#${Id}`).hide();
+                    }
+                })
+            }
+        }
+    </script>
+}
+
+@section Style{
+    <style>
+
+        body {
+        background-color: #eef5f0;
+        }
+    </style>
+}

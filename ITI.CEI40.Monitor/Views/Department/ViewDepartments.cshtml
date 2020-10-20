@@ -1,0 +1,415 @@
+﻿@model DepartmentViewModel
+@{
+    ViewData["Title"] = "Company Structure";
+}
+
+<div class="row pt-5">
+    <div class="col-6">
+
+        <!--#region Table Section  -->
+        <div id="DepartmentTable" style="border: 2px solid rgb(219, 219, 219) ;   border-radius: 8px;">
+
+            @if (Model.Departments.Count <= 0)
+            {
+                <h4 id="NO DEPARTMENTS ADDED TILL NOW" style="padding:45px 20px " class="text-muted text-center">Create your first project </h4>
+            }
+            else
+            {
+                <div class="p-3">
+                    <table class="table table-hover text-center table-sm ">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th scope="col">Department</th>
+                                <th scope="col">Department Manager</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablebody">
+                            @foreach (var item in Model.Departments)
+                            {
+                                <tr id="@item.Id" onclick="viewTeams(@item.Id,'@item.Name')">
+                                    <td class="text-center font-weight-bold">@item.Name</td>
+                                    @if (item.FK_ManagerID != null)
+                                    {
+                                        <td>@item.Manager.UserName</td>
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+                                    }
+                                    <td class="text-right">
+                                        <div class="btn-group" role="group" aria-label="Basic example">
+                                            @*<a class="btn btn-outline-primary btn-sm" asp-controller="Team" asp-action="viewTeams" asp-route-id="@item.Id"><i class="fas fa-users"></i></a>*@
+                                            <button type="button" class="btn btn-outline-success btn-sm" onclick="AssignManager(@item.Id)"><i class="fas fa-male"></i></button>
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteDept(@item.Id)"><i class="far fa-trash-alt"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <button type="button" class="btn btn-sm btn-primary mb-3 ml-3" onclick="addDept()">Add Department</button>
+        </div>
+        <!--#endregion -->
+    </div>
+
+
+    <div class="col-6">
+        <!--#region Form Section  -->
+        <div id="teamTables" style="border: 2px solid rgb(219, 219, 219) ;  border-radius: 8px; padding:40px 0 40px 0">
+            <h4 class="text-muted text-center">Choose Department To Display</h4>
+        </div>
+        <!--#endregion -->
+    </div>
+</div>
+
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Add Department</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="test">
+                <div class="form-group">
+                    <label asp-for="Dept.Name"> </label>
+                    <input asp-for="Dept.Name" type="text" class="form-control" id="deptName" />
+                    <span asp-validation-for="Dept.Name" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="AddDeptBtn">Add</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Assign Manager -->
+<div class="modal fade" id="AssignManagerModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Add Team</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="managersList">
+                <div class="form-group">
+                    <label asp-for="Dept.FK_ManagerID"></label>
+                    <select id="managers" class="form-control" asp-for="Dept.FK_ManagerID"
+                            asp-items="new SelectList(string.Empty,nameof(ApplicationUser.Id),nameof(ApplicationUser.UserName))">
+                    </select>
+                    <span asp-validation-for="Dept.FK_ManagerID" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="AssignManagerBtn">Submit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- Add Team Modal -->
+<div class="modal fade" id="addTeamModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Add Team</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="test">
+                <div class="form-group">
+                    <label asp-for="Name"> </label>
+                    <input asp-for="Name" type="text" class="form-control" id="teamName" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="addTeamBtn">Add</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Assign Team Leader -->
+<div class="modal fade" id="AssignLeaderModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Add Team</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="managersList">
+                <div class="form-group">
+                    <label asp-for="TeamLeaderId"></label>
+                    <select id="leaders" class="form-control" asp-for="TeamLeaderId"
+                            asp-items="new SelectList(string.Empty,nameof(ApplicationUser.Id),nameof(ApplicationUser.UserName))">
+                    </select>
+                    <span asp-validation-for="TeamLeaderId" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="AssignLeaderBtn">Submit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/jquery-validation-unobtrusive-ajax/dist/jquery.unobtrusive-ajax.js"></script>
+    <script>
+        var DepaermentID;
+        //-------Add Department
+
+        function addDept() {
+            $('#addDeptModel').modal('show');
+        }
+
+        $('#AddDeptBtn').on("click",
+            function () {
+                var departmentName = $('#deptName').val();
+                if (!departmentName) {
+                    alert("Please Enter Department Name First")
+                }
+                else {
+                    $.post("/Department/addDepartment", { name: departmentName }, function (data, status) {
+                        if (status == "success") {
+                            console.log(data);
+                            var tbody = $("#tablebody");
+                            var msg = "RealTest";
+                            connection.invoke("sendNotification", msg);
+                            $('#addDeptModel').modal('hide');
+                            tbody.append(data);
+                            setTimeout(function () {
+                                alert("Department Added Successfully");
+                            }, 500);
+                        }
+                    });
+                }
+            });
+
+        //-------Reset Modal When Closed
+        $('#addDeptModel').on('hidden.bs.modal', function (e) {
+            $('#deptName').val("");
+        })
+        //--------Delete Department
+
+        function deleteDept(deptid) {
+            let reponse = confirm("Are You Sure ? ");
+            if (reponse) {
+                $.ajax({
+                    url: "/Department/DeleteDepartment",
+                    type: "POST",
+                    data: { id: deptid },
+                    success: function (result) {
+                        if (result) {
+                            $("#" + deptid).remove();
+                            console.log($("#" + deptid));
+                            console.log($("#" + deptid));
+                        }
+                        else {
+                            alert("Check Department Dependecies First");
+                        }
+                    },
+                    error: function (x, y, err) {
+                        console.log(err);
+                    }
+                });
+            }
+        }
+
+        //--------
+        //Open the right window which contain the form
+        //this function is called from (Edit function , Add function)
+        function viewTeams(DeptId, DepName) {
+            DepartmentId = DeptId;
+            $.ajax({
+                type: "GET",
+                url: `/Team/ViewTeams`,
+                data: { id: DeptId, Name: DepName },
+                success: function (response) {
+
+                    $('#teamTables').empty();
+                    $('#teamTables').append(response);
+                },
+                error: function (x, y, err) {
+                    console.log(arguments)
+                }
+            })
+        };
+
+
+        //-------Assign Dept Manager
+        function AssignManager(id) {
+            DepaermentID = id;
+            $.ajax({
+                url: "/Employee/AssignManager",
+                type: "GET",
+                data: { role: "DepartmentManager" },
+                success: function (result, status) {
+                    if (result && status == "success") {
+                        $("#managers").empty();
+                        $("#managers").append("<option value='0'>Select Manager</option>");
+                        for (var i = 0; i < result.length; i++) {
+                            $("#managers").append(`<option value='${result[i].id}'>${result[i].userName}</option>`);
+                        }
+                        $('#AssignManagerModal').modal('show');
+                    }
+                }
+            })
+        }
+
+
+        $("#AssignManagerBtn").on('click', function () {
+            console.log("Hello")
+            var EmpID = $("#managers").val();
+            if (EmpID) {
+                $.ajax({
+                    url: "/Employee/AssignManager",
+                    type: "Post",
+                    data: { id: DepaermentID, EmpId: EmpID, IsDept: true },
+                    success: function (result, status) {
+                        if (result && status == "success") {
+                            console.log(result);
+                            $("#managers").val("");
+                            let test = $(`#${result.deptId} .ManagerName`).html(`${result.managerName}`);
+                            console.log(test);
+                            $('#AssignManagerModal').modal('hide');
+                            setTimeout(function () { alert("Updated Successfully") }, 500);
+                        }
+                    }
+                })
+            }
+        })
+
+
+        //-------------Teams Functions------------//
+
+        //-------Add Team
+
+        function addTeam() {
+            $('#addTeamModel').modal('show');
+        }
+        $('#addTeamBtn').on("click",
+            function () {
+                var teamName = $('#teamName').val();
+                if (!teamName) {
+                    alert("Please Enter Team Name ")
+                }
+                else {
+                    $.post("/Team/addTeam", { name: teamName, FK_DepartmentId: DepartmentId }, function (data, status) {
+                        if (status == "success") {
+                            var tbody = $("#teamsList");
+                            $('#addTeamModel').modal('hide');
+                            tbody.append(data);
+                            setTimeout(function () {
+                                alert("Team Added succesfully");
+                            }, 500);
+                        }
+                    });
+                }
+            });
+
+
+        //-------Reset Modal When Closed
+        $('#addTeamModel').on('hidden.bs.modal', function (e) {
+            $('#teamName').val("");
+        })
+
+
+        //--------Delete Team
+
+        function deleteTeam(teamId) {
+            let reponse = confirm("Are You Sure ? ");
+            if (reponse) {
+                $.ajax({
+                    url: "/Team/DeleteTeam",
+                    type: "POST",
+                    data: { id: teamId },
+                    success: function (result) {
+                        if (result) {
+                            $("#" + teamId).remove();
+                            console.log($("#" + teamId));
+                        }
+                        else {
+                            alert("Check Team Dependecies First");
+                        }
+                    },
+                    error: function (x, y, err) {
+                        console.log(err);
+                    }
+                });
+            }
+        }
+
+
+
+        //-------Assign Team Leader
+
+        function AssignLeader(id) {
+            teamID = id;
+            $.ajax({
+                url: "/Employee/AssignManager",
+                type: "GET",
+                data: { role: "TeamLeader" },
+                success: function (result, status) {
+                    if (result && status == "success") {
+                        $("#leaders").empty();
+                        $("#leaders").append("<option value='0'>Select Team Leader</option>");
+                        for (var i = 0; i < result.length; i++) {
+                            $("#leaders").append(`<option value='${result[i].id}'>${result[i].userName}</option>`);
+                        }
+                        $('#AssignLeaderModal').modal('show');
+                    }
+                }
+            })
+        }
+
+
+        $("#AssignLeaderBtn").on('click', function () {
+            var EmpID = $("#leaders").val();
+            if (EmpID) {
+                $.ajax({
+                    url: "/Employee/AssignManager",
+                    type: "Post",
+                    data: { id: teamID, EmpId: EmpID, IsDept: false },
+                    success: function (result, status) {
+                        if (result && status == "success") {
+                            console.log(result);
+                            $("#leaders").val("");
+                            $(`#${result.teamtId} .ManagerName`).html(`${result.managerName}`);
+                            $('#AssignLeaderModal').modal('hide');
+                            setTimeout(function () { alert("Updated Successfully") }, 500);
+                        }
+                    }
+                })
+            }
+        })
+
+    </script>
+}
+

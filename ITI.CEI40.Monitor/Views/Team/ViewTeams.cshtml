@@ -1,0 +1,253 @@
+﻿@model TeamViewModel
+@{
+    ViewData["Title"] = "ViewTeams";
+}
+
+<h1>Teams</h1>
+<br />
+<button type="button" class="btn btn-primary mb-3" onclick="addTeam(@Model.FK_DepartmentId)">Add Team</button>
+
+<div style="text-align:center">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Number of Employees</th>
+                <th scope="col">Team Leader</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody id="teamsList">
+            @for (int i = 0; i < Model.teams.Count(); i++)
+            {
+                <tr id="@Model.teams[i].Id">
+                    <td>@Model.teams[i].Name</td>
+                    <td>@Model.teams[i].Engineers.Count()</td>
+                    <td class="ManagerName">@Model.teams[i].TeamLeader</td>
+                    <td>
+                        <div class="btn-group" role="group" aria-label="Basic example">
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="AssignManager(@Model.teams[i].Id)"><i class="fas fa-male"></i></button>
+                            @*<a class="btn btn-outline-primary" asp-controller="Employee" asp-action="ViewEmployees" asp-route-id="@Model.teams[i].Id"><i class="fas fa-users"></i></a>*@
+                            <button type="button" class="btn btn-danger btn-sm" onclick="deleteTeam(@Model.teams[i].Id)"><i class="far fa-trash-alt"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+
+<!--#region Table Section  -->
+<div id="teamsTable" style="border: 2px solid rgb(219, 219, 219) ;  border-radius: 8px;">
+
+    @if (Model.teams.Count <= 0)
+    {
+        <h4 id="NO Teams ADDED TILL NOW" style="padding:45px 20px " class="text-muted text-center">Create your first project </h4>
+    }
+    else
+    {
+        <table class="table table-hover text-center">
+            <thead>
+                <tr>
+                    <th scope="col">Department</th>
+                    <th scope="col">Team Leader</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tablebody">
+                @foreach (var item in Model.teams)
+                {
+                    <tr id="@item.Id" onclick="showTeams(@item.Id)">
+                        <td class="text-center font-weight-bold">@item.Name</td>
+                        @if (item.FK_TeamLeaderId != null)
+                        {
+                            <td class="ManagerName">@item.TeamLeader.UserName</td>
+                        }
+                        else
+                        {
+                            <td></td>
+                        }
+                        <td class="text-right">
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                <button type="button" class="btn btn-outline-success " onclick="AssignManager(@item.Id)"><i class="fas fa-male"></i></button>
+                                <a class="btn btn-outline-primary" asp-controller="Employee" asp-action="ViewEmployees" asp-route-id="@item.Id"><i class="fas fa-users"></i></a>
+                                <button type="button" class="btn btn-danger" onclick="deleteTeam(@item.Id)"><i class="far fa-trash-alt"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    <button type="button" class="btn btn-sm btn-primary mb-3 ml-3" onclick="addDept()">Add Department</button>
+</div>
+
+
+
+
+
+
+<!-- Add Team Modal -->
+<div class="modal fade" id="addTeamModel" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Add Team</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="test">
+                <div class="form-group">
+                    <label asp-for="Name"> </label>
+                    <input asp-for="Name" type="text" class="form-control" id="teamName" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="addTeamBtn">Add</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Assign Manager -->
+<div class="modal fade" id="AssignManagerModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Add Team</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="managersList">
+                <div class="form-group">
+                    <label asp-for="TeamLeaderId"></label>
+                    <select id="managers" class="form-control" asp-for="TeamLeaderId"
+                            asp-items="new SelectList(string.Empty,nameof(ApplicationUser.Id),nameof(ApplicationUser.UserName))">
+                    </select>
+                    <span asp-validation-for="TeamLeaderId" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="AssignManagerBtn">Submit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@section scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/jquery-validation-unobtrusive-ajax/dist/jquery.unobtrusive-ajax.js"></script>
+    <script>
+        //-------Add Team
+
+        function addTeam(id) {
+            $('#addTeamModel').modal('show');
+        }
+        $('#addTeamBtn').on("click",
+            function () {
+                var teamName = $('#teamName').val();
+                if (!teamName) {
+                    alert("Please Enter Team Name ")
+                }
+                else {
+                    $.post("/Team/addTeam", { name: teamName, FK_DepartmentId:@Model.FK_DepartmentId }, function (data, status) {
+                        if (status == "success") {
+                            var tbody = $("#tableBody");
+                            $('#addTeamModel').modal('hide');
+                            tbody.append(data);
+                            alert("Team Added succesfully");
+                        }
+                    });
+                }
+            });
+
+
+        //-------Reset Modal When Closed
+        $('#addTeamModel').on('hidden.bs.modal', function (e) {
+            $('#teamName').val("");
+        })
+
+
+        //--------Delete Team
+
+        function deleteTeam(teamId) {
+            let reponse = confirm("Are You Sure ? ");
+            if (reponse) {
+                $.ajax({
+                    url: "/Team/DeleteTeam",
+                    type: "POST",
+                    data: { id: teamId },
+                    success: function (result) {
+                        if (result) {
+                            $("#" + teamId).remove();
+                            console.log($("#" + teamId));
+                        }
+                        else {
+                            alert("Check Team Dependecies First");
+                        }
+                    },
+                    error: function (x, y, err) {
+                        console.log(err);
+                    }
+                });
+            }
+        }
+
+
+
+         //-------Assign Team Leader
+
+        function AssignManager(id) {
+            teamID = id;
+            $.ajax({
+                url: "/Employee/AssignManager",
+                type: "GET",
+                data: { role: "Team Leader" },
+                success: function (result, status) {
+                    if (result && status == "success") {
+                        $("#managers").empty();
+                        $("#managers").append("<option value='0'>Select Team Leader</option>");
+                        for (var i = 0; i < result.length; i++) {
+                            $("#managers").append(`<option value='${result[i].id}'>${result[i].userName}</option>`);
+                        }
+                        $('#AssignManagerModal').modal('show');
+                    }
+                }
+            })
+        }
+
+
+        $("#AssignManagerBtn").on('click', function () {
+            var EmpID = $("#managers").val();
+            if (EmpID) {
+                $.ajax({
+                    url: "/Employee/AssignManager",
+                    type: "Post",
+                    data: { id: teamID, EmpId: EmpID, IsDept: false },
+                    success: function (result, status) {
+                        if (result && status == "success") {
+                            console.log(result);
+                            $("#managers").val("");
+                            $(`#${result.teamtId} .ManagerName`).html(`${result.managerName}`);
+                            $('#AssignManagerModal').modal('hide');
+                            setTimeout(function () { alert("Updated Successfully") }, 500);
+                        }
+                    }
+                })
+            }
+        })
+
+    </script>
+}
